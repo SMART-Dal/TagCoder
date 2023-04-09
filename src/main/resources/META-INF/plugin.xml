@@ -1,0 +1,63 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+    <id>com.himesh.tagman.TagmanPlugin</id>
+
+    <!-- Public plugin name should be written in Title Case.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
+    <name>Tagman</name>
+
+    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <vendor email="himesh.nandani@dal.ca" url="https://www.dal.ca">Dalhousie TagCoder</vendor>
+
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+         Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
+    <description><![CDATA[
+    <p>The plugin analyzes your Java projects and identifies code smells at implementation, design, and architecture
+granularity. It also computes common code quality metrics to measure complexity, cohesion, and coupling.</p>
+
+    <p>The plugin tags methods and classes within IntelliJ suffering from smells to motivate
+    you to refactor the method or class.
+    Also, the plugin shows a tool window that lists code quality
+    information (i.e., smells and metrics) of the active file to keep an eye on the code quality.</p>
+
+    <p>The plugin uses DesigniteJava to analyze
+    Java source code.</p>
+  ]]></description>
+
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
+
+    <!-- Extension points defined by the plugin.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <extensions defaultExtensionNs="com.intellij">
+        <codeInsight.lineMarkerProvider language="" implementationClass="com.himesh.tagman.tagmanplugin.TagmanLineMarker"/>
+<!--        <toolWindow id="DesigniteJava" secondary="true" anchor="bottom"-->
+<!--                    factoryClass="com.himesh.tagman.tagmanplugin.ToolWindowFactory" icon="/Images/designite_icon_16.png"/>-->
+
+    </extensions>
+    <extensions defaultExtensionNs="com.intellij">
+        <notificationGroup id="Custom Notification Group"
+                           displayType="BALLOON"
+                           key="notification.group.name"/>
+    </extensions>
+    <actions>
+        <group id="Designite.MainMenu" class="com.himesh.tagman.tagmanplugin.DesigniteMenu" text="_TagCoder" popup="true" icon="/Images/tagcoder_icon_16.png">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <!--            <action id="Designite.RunMenuItem" class="designite.ui.DesigniteMenuAnalyze" />-->
+            <!--            <action id="Designite.Settings" class="designite.ui.DesigniteMenuSettings"/>-->
+        </group>
+        <!--        <group>-->
+        <!--            <action id="Designite.ClassInfoMenu" class="designite.ui.toolWindow.ClassInfoMenu"-->
+        <!--                    text="Get class info ..." description="Shows metrics and smells in the class"/>-->
+        <!--            <add-to-group group-id="EditorPopupMenu" anchor="first"/>-->
+        <!--        </group>-->
+    </actions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <postStartupActivity implementation="com.himesh.tagman.tagmanplugin.TagmanProjectListner"/>
+    </extensions>
+</idea-plugin>
