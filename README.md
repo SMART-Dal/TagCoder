@@ -1,4 +1,4 @@
 # TagCoder
-To run the server, download the code, install docker-compose and run the following commands:
-docker-compose build 
-docker-compose up
+## Running the code.
+The plugin code. 
+To run, open the project in Intellij and run the runIDE task in gradle. 
