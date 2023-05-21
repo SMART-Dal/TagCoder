@@ -52,7 +52,7 @@ public class IntelliJ_Utils {
         }
     }
 
-    public static void sendFeedback(String file, String smell, boolean isSmell){
+    public static void sendFeedback(String file, String smell, boolean originalSmell,boolean predictedSmell){
         String stubsApiBaseUri = "http://localhost:8031/api/collect-feedback/";
        try {
            HttpClient client = HttpClients.createDefault();
@@ -61,7 +61,8 @@ public class IntelliJ_Utils {
            URIBuilder builder = new URIBuilder(stubsApiBaseUri);
            builder.addParameter("file", file);
            builder.addParameter("smell", smell);
-           builder.addParameter("isSmell", String.valueOf(isSmell));
+           builder.addParameter("isSmell", String.valueOf(originalSmell));
+           builder.addParameter("userResponded", String.valueOf(predictedSmell));
 
            String listStubsUri = builder.build().toString();
            HttpPost getStubMethod = new HttpPost(listStubsUri);

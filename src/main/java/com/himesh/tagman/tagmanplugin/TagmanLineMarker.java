@@ -1,7 +1,11 @@
 package com.himesh.tagman.tagmanplugin;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.lang.reflect.Type;
+import com.google.gson.reflect.TypeToken;
 import com.himesh.tagman.tagmanplugin.assetLoaders.DesigniteAssetLoader;
 import com.himesh.tagman.tagmanplugin.lineMarkerProvider.ProjectSmellsInfo;
 import com.himesh.tagman.tagmanplugin.lineMarkerProvider.SmellsInfoProvider;
@@ -57,11 +61,6 @@ public class TagmanLineMarker extends RelatedItemLineMarkerProvider {
             List<DesignSmell> designSmellList = smellsInfoProvider.getDesignSmellList();
             if (psiClass.getQualifiedName() == null) return;
             String currentClass = psiClass.getQualifiedName();
-            List<CodeSmell> filteredList = designSmellList.stream().filter(smell -> psiClass.getQualifiedName().equals(smell.getPkg() + "." + smell.getClassName())).collect(Collectors.toList());
-            if (filteredList.size() > 0) {
-                //  MyLineMarkerInfo info = new MyLineMarkerInfo(element, designiteAssets, filteredList, "design");
-                // result.add(info);
-            }
             try {
                 String stubsApiBaseUri = "http://localhost:8031/api/apply-ml/";
                 HttpClient client = HttpClients.createDefault();
@@ -82,15 +81,16 @@ public class TagmanLineMarker extends RelatedItemLineMarkerProvider {
                 if (entity != null) {
                     String content = EntityUtils.toString(entity);
                     JsonObject jsonObject = new JsonParser().parse(content).getAsJsonObject();
-                    String smellStr = jsonObject.get("isSmell").getAsString();
-                    List<String> smellsStr = List.of(smellStr.split(";"));
-                    List<Boolean> smellsRes = smellsStr.stream().map(smell -> Boolean.parseBoolean(smell)).collect(Collectors.toList());
-                    boolean isSmell = Boolean.parseBoolean(jsonObject.get("isSmell").getAsString());
-                    String smell = jsonObject.get("smell").getAsString();
-                    List<String> smells = List.of(smell.split(";"));
-                    System.out.println("isSmell" + isSmell);
+//                    String smellStr = jsonObject.get("isSmell").getAsString();
+//                    List<String> smellsStr = List.of(smellStr.split(";"));
+//                    List<Boolean> smellsRes = smellsStr.stream().map(smell -> Boolean.parseBoolean(smell)).collect(Collectors.toList());
+//                    boolean isSmell = Boolean.parseBoolean(jsonObject.get("isSmell").getAsString());
+                    Type listType = new TypeToken<List<String>>() {}.getType();
+                    JsonElement smell = jsonObject.getAsJsonArray("smell");
+                    List<String> smells = new Gson().fromJson(smell, listType);
+                    System.out.println("smeslls"+smells.toString());
                     //System.out.println("psitoken" + psiMethod.getContainingFile().getVirtualFile().getPath());
-                    MyLineMarkerInfo info = new MyLineMarkerInfo(element, designiteAssets, smells, smellsRes, result);
+                    MyLineMarkerInfo info = new MyLineMarkerInfo(element, designiteAssets, smells, result);
                     result.add(info);
                     // do something with the JSON object
                 }
@@ -132,15 +132,15 @@ public class TagmanLineMarker extends RelatedItemLineMarkerProvider {
                 if (entity != null) {
                     String content = EntityUtils.toString(entity);
                     JsonObject jsonObject = new JsonParser().parse(content).getAsJsonObject();
-                    String smellStr = jsonObject.get("isSmell").getAsString();
-                    List<String> smellsStr = List.of(smellStr.split(";"));
-                    List<Boolean> smellsRes = smellsStr.stream().map(smell -> Boolean.parseBoolean(smell)).collect(Collectors.toList());
-                    boolean isSmell = Boolean.parseBoolean(jsonObject.get("isSmell").getAsString());
-                    String smell = jsonObject.get("smell").getAsString();
-                    List<String> smells = List.of(smell.split(";"));
-                    System.out.println("isSmell" + isSmell);
+                   // String smellStr = jsonObject.get("isSmell").getAsString();
+                    Type listType = new TypeToken<List<String>>() {}.getType();
+                    JsonElement smell = jsonObject.getAsJsonArray("smell");
+
+                    List<String> smells = new Gson().fromJson(smell, listType);
+                    System.out.println("smeslls"+smells.toString());
+
                     //System.out.println("psitoken" + psiMethod.getContainingFile().getVirtualFile().getPath());
-                    MyLineMarkerInfo info = new MyLineMarkerInfo(element, designiteAssets, smells, smellsRes, result);
+                    MyLineMarkerInfo info = new MyLineMarkerInfo(element, designiteAssets, smells, result);
                     result.add(info);
                     // do something with the JSON object
                 }
@@ -161,14 +161,14 @@ public class TagmanLineMarker extends RelatedItemLineMarkerProvider {
     private static class MyLineMarkerInfo extends RelatedItemLineMarkerInfo<PsiElement> {
         private final List<String> smellList;
 
-        private final List<Boolean> smellBoolean;
+
 
         private final Collection<? super RelatedItemLineMarkerInfo<?>> result;
         PsiElement psiElement;
 
 
 
-        private MyLineMarkerInfo(@NotNull PsiElement element, DesigniteAssetLoader designiteAssetLoader, List<String> smellList, List<Boolean> smellBoolean, Collection<? super RelatedItemLineMarkerInfo<?>> result) {
+        private MyLineMarkerInfo(@NotNull PsiElement element, DesigniteAssetLoader designiteAssetLoader, List<String> smellList, Collection<? super RelatedItemLineMarkerInfo<?>> result) {
             super(element, element.getTextRange(), designiteAssetLoader.getDesigniteIcon(), Pass.LOCAL_INSPECTIONS, FunctionUtil.constant(smellList.size() + " smell(s) detected."),   new GutterIconNavigationHandler<PsiElement>() {
                 private final Icon myClickedGutterIcon = designiteAssetLoader.getDesigniteIconGreen();
                 @Override
@@ -183,7 +183,7 @@ public class TagmanLineMarker extends RelatedItemLineMarkerProvider {
             }, GutterIconRenderer.Alignment.RIGHT, NotNullLazyValue.createConstantValue(Collections.emptyList()));
             this.smellList = smellList;
             this.psiElement = element;
-            this.smellBoolean = smellBoolean;
+
             this.result = result;
         }
 
@@ -195,7 +195,7 @@ public class TagmanLineMarker extends RelatedItemLineMarkerProvider {
                 @Override
                 public AnAction getClickAction() {
 
-                    return new SimplePopDialogAction(smellList, smellBoolean, psiElement, result);
+                    return new SimplePopDialogAction(smellList, psiElement, result);
                 }
             };
         }
@@ -203,25 +203,43 @@ public class TagmanLineMarker extends RelatedItemLineMarkerProvider {
 
     public static class SimplePopDialogAction extends AnAction {
         private final List<String> smellList;
-        private final List<Boolean> smellBol;
+
         private final PsiElement psiElement;
 
         Collection<? super RelatedItemLineMarkerInfo<?>> resultPassed;
 
-        public SimplePopDialogAction(List<String> smellList, List<Boolean> smellBol, PsiElement psiElement, Collection<? super RelatedItemLineMarkerInfo<?>> result) {
+        public SimplePopDialogAction(List<String> smellList, PsiElement psiElement, Collection<? super RelatedItemLineMarkerInfo<?>> result) {
             this.smellList = smellList;
             this.psiElement = psiElement;
-            this.smellBol = smellBol;
+
             this.resultPassed = result;
         }
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
             String infoMessage = "<html><body>";
-            String[] options = {"Yes", "No!"};
-            for (int i = 0; i < smellList.size(); i++) {
-                if (smellList.get(i).equalsIgnoreCase("no smell")) {
-                    infoMessage += "<p style='width: 400px;'><b>" + smellList.get(i) + " was identified" + ". </b> " + "</p>";
+            List<String> optStr = new ArrayList<>();
+           // String[] options = {"Yes", "No!"};
+            optStr.add("Yes");
+            optStr.add("No!");
+            if(smellList.size() == 0) {
+
+                infoMessage += "<p style ='width: 400px;'><b>The tool found that no smell exists.</b></p>";
+            }
+             else {
+                optStr.add("Other Smell?");
+                infoMessage += "<p style ='width: 400px;'><b>";
+                for (int i = 0; i < smellList.size(); i++) {
+                    String smell = "";
+                    if(smellList.get(i).equalsIgnoreCase("ComplexMethod"))
+                       smell = "Complex Method";
+                    else if (smellList.get(i).equalsIgnoreCase("LongMethod")) {
+                        smell = "Long Parameter List";
+                    }
+                    else if (smellList.get(i).equalsIgnoreCase("MultiFaceted")) {
+                        smell = "Multifaceted Abstraction";
+                    }
+
                     //        infoMessage += "<p style='width: 400px;'><b>If you think a smell exisits, please select from the list below.</b></p><br>";
 //                    JPanel pContainer = new JPanel();
 //
@@ -243,30 +261,69 @@ public class TagmanLineMarker extends RelatedItemLineMarkerProvider {
 //                    pContainer.add(pList);
 //
 //                    JOptionPane.showMessageDialog(null,new JScrollPane(pContainer),"smells",JOptionPane.INFORMATION_MESSAGE);
-                } else
-                    infoMessage += "<p style='width: 400px;'><b>" + smellList.get(i) + " was identified as " + smellBol.get(i) + ". </b> " + "</p>";
+
+                    infoMessage += " The tool identified the " + smellList.get(i) + " smell. <br> ";
+                }
+                infoMessage += "</b></p>";
             }
-            infoMessage += "Are these results accurate? </b></body></html>";
+            infoMessage += "<b>Are these results accurate? </b></body></html>";
+            JOptionPane pane = new JOptionPane();
+
+            JDialog dialog = pane.createDialog(null, "Smells Detected");
+
             int result = JOptionPane.showOptionDialog(
-                    null, infoMessage, "Smells", JOptionPane.YES_NO_OPTION
+                    null, infoMessage, "Smells Detected", JOptionPane.YES_NO_OPTION
                     , JOptionPane.QUESTION_MESSAGE,
                     IconLoader.getIcon("Images/tagcoder_logo.png"),
-                    options,
-                    options[0]);
+                    optStr.toArray(),
+                    optStr.toArray()[0]);
             //null, infoMessage, "DesigniteJava: Detected smells", JOptionPane.YES_NO_OPTION, IconLoader.getIcon("Images/designite_logo.png", LineMarker.class),options,options[0]);
             if (result == JOptionPane.YES_OPTION) {
-                smellList.forEach(smell -> IntelliJ_Utils.sendFeedback(psiElement.getText(), smell, true));
-                IntelliJ_Utils.sendFeedback(psiElement.getText(), smellList.get(0), true);
+                if(smellList.size() == 0)
+                    IntelliJ_Utils.sendFeedback(psiElement.getText(), "none",true, true);
+                smellList.forEach(smell -> IntelliJ_Utils.sendFeedback(psiElement.getText(), smell,true, true));
+                //IntelliJ_Utils.sendFeedback(psiElement.getText(), smellList.get(0), true);
 
 
             } else if (result == JOptionPane.NO_OPTION) {
-                if (smellList.stream().anyMatch(smell -> smell.equalsIgnoreCase("no smell"))) {
+                if (smellList.size() == 0) {
                     String[] smellOpts = {
                             "Long Parameter List", "Multifaceted Abstraction", "Complex Method"};
 
-                    JOptionPane.showInputDialog(null, "Please choose smells discovered","Select Smells",JOptionPane.QUESTION_MESSAGE,null, smellOpts, smellOpts[0]);
+                   String output = (String) JOptionPane.showInputDialog(null, "Please choose smells discovered","Select Smells",JOptionPane.QUESTION_MESSAGE,null, smellOpts, smellOpts[0]);
+                    if(output != null) {
+                        if (output.equalsIgnoreCase("Long Parameter List"))
+                            IntelliJ_Utils.sendFeedback(psiElement.getText(), "LongMethod", false, true);
+
+                        if (output.equalsIgnoreCase("Multifaceted Abstraction"))
+                            IntelliJ_Utils.sendFeedback(psiElement.getText(), "MultiFaceted", false, true);
+
+                        if (output.equalsIgnoreCase("Complex Method"))
+                            IntelliJ_Utils.sendFeedback(psiElement.getText(), "ComplexMethod", false, true);
+                    }
+
+                   // System.out.println("User clicked "+output);
                 }
-                IntelliJ_Utils.sendFeedback(psiElement.getText(), smellList.get(0), false);
+                else{
+                    smellList.forEach(smell -> IntelliJ_Utils.sendFeedback(psiElement.getText(), smell,true, false));
+
+                }
+               // IntelliJ_Utils.sendFeedback(psiElement.getText(), smellList.get(0), false);
+            } else if (result == 2) {
+                String[] smellOpts = {
+                        "Long Parameter List", "Multifaceted Abstraction", "Complex Method"};
+
+                String output = (String) JOptionPane.showInputDialog(null, "Please choose smells discovered","Select Smells",JOptionPane.QUESTION_MESSAGE,null, smellOpts, smellOpts[0]);
+                if(output != null) {
+                    if (output.equalsIgnoreCase("Long Parameter List"))
+                        IntelliJ_Utils.sendFeedback(psiElement.getText(), "LongMethod", false, true);
+
+                    if (output.equalsIgnoreCase("Multifaceted Abstraction"))
+                        IntelliJ_Utils.sendFeedback(psiElement.getText(), "MultiFaceted", false, true);
+
+                    if (output.equalsIgnoreCase("Complex Method"))
+                        IntelliJ_Utils.sendFeedback(psiElement.getText(), "ComplexMethod", false, true);
+                }
             } else {
                 System.out.println("Cancelled");
             }

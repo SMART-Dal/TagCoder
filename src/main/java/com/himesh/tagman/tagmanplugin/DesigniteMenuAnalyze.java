@@ -22,7 +22,6 @@ import java.util.logging.Level;
 import static com.himesh.tagman.tagmanplugin.constants.Constants.*;
 
 
-
 public class DesigniteMenuAnalyze extends AnAction {
 
     public DesigniteMenuAnalyze() {
@@ -33,7 +32,7 @@ public class DesigniteMenuAnalyze extends AnAction {
     @Override
     public void actionPerformed(AnActionEvent event) {
         DesigniteAssetLoader designiteAssetLoader = new DesigniteAssetLoader();
-        if(!designiteAssetLoader.isDesigniteJarExists()) {
+        if (!designiteAssetLoader.isDesigniteJarExists()) {
             int response = JOptionPane.showConfirmDialog(null,
                     DJ_DOWNLOAD_Q_TEXT,
                     "TagCoder",
@@ -61,7 +60,7 @@ public class DesigniteMenuAnalyze extends AnAction {
                 designiteProperties.buildProperties();
             }
             //check again (in case of error)
-            if(!designiteAssetLoader.isDesigniteJarExists())
+            if (!designiteAssetLoader.isDesigniteJarExists())
                 return;
         }
         TagmanProjectListner projectAction = new TagmanProjectListner();
@@ -71,8 +70,21 @@ public class DesigniteMenuAnalyze extends AnAction {
                 IconLoader.getIcon("Images/tagcoder_logo.png", DesigniteMenuAnalyze.class));
 
         if (event != null && event.getProject() != null) {
-            Thread threadDesignite = new Thread(() -> projectAction.invokeDesignite(event.getProject()));
+            Thread threadDesignite = new Thread(() -> {
+                projectAction.invokeDesignite(event.getProject());
+                MyNotifier.notifyInfo(getEventProject(event),"Designite analysis finished.");
+            });
             threadDesignite.start();
+
+      /*      while (threadDesignite.isAlive()){
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }*/
+
+
         }
     }
 }
